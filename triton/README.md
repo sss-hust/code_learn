@@ -1,44 +1,66 @@
-# Triton 推理加速函数练习
+# Triton 推理加速练习
 
-本目录包含 10 个 Triton kernel 练习，覆盖推理加速中最常用的算子，按难度由浅入深排列。
+本目录现在同时提供两种训练模式：
+
+- `exercise.py`：补函数模式。wrapper 和测试已经写好，适合先熟悉 Triton kernel 核心逻辑。
+- `interview.py`：面试模式。你需要自己补 kernel、wrapper、grid 配置和 `main()` 数据流。
+- `solution.py`：参考实现。
+- `test.py`：针对 `exercise.py` / `solution.py` 的自动化测试。
 
 ## 环境要求
 
 ```bash
-pip install triton torch pytest
-```
+pip install torch triton pytest
 
-## 练习列表
-
-| # | 练习 | 核心知识点 | 难度 |
-|---|------|----------|------|
-| 01 | vector_add 向量加法 | grid、program_id、load/store、mask | ⭐ |
-| 02 | softmax | 行级并行、在线max-exp-sum、数值稳定性 | ⭐⭐ |
-| 03 | layer_norm 层归一化 | 均值/方差计算、归一化、可学习参数 | ⭐⭐ |
-| 04 | rms_norm RMS归一化 | 简化版LayerNorm、推理主流归一化 | ⭐⭐ |
-| 05 | silu_gelu 激活函数 | 逐元素运算、SiLU/GELU公式 | ⭐ |
-| 06 | rope 旋转位置编码 | 复数旋转、频率计算、成对元素 | ⭐⭐⭐ |
-| 07 | online_softmax 在线Softmax | 单遍softmax、FlashAttention前置 | ⭐⭐⭐ |
-| 08 | matrix_mul 矩阵乘法 | 分块计算、tl.dot、tiling | ⭐⭐⭐ |
-| 09 | fused_add_rmsnorm | 算子融合、residual连接 | ⭐⭐⭐ |
-| 10 | flash_attention | 分块Attention、在线Softmax | ⭐⭐⭐⭐ |
-
-## 使用方法
-
-每个练习包含三个文件：
-- `exercise.py` — 填写 `# TODO` 标记处的代码
-- `solution.py` — 参考答案
-- `test.py` — 自动测试
-
-```bash
-# 测试你的实现
+# 运行某道题的 interview 模式
 cd 01_vector_add
+python interview.py
+
+# 运行补函数模式的测试
 pytest test.py -v
-
-# 测试参考答案
-pytest test.py -v --check-solution
-
-# 运行全部测试
-cd d:\学习\code_learn\triton
-pytest -v
 ```
+
+## 题目列表
+
+| # | 题目 | 核心知识点 | 难度 |
+|---|---|---|---|
+| 01 | `vector_add` | `program_id`、`load/store`、mask | ⭐ |
+| 02 | `softmax` | 行级并行、数值稳定性、归约 | ⭐⭐ |
+| 03 | `layer_norm` | 均值/方差、逐行归一化 | ⭐⭐ |
+| 04 | `rms_norm` | RMS 归一化 | ⭐⭐ |
+| 05 | `silu_gelu` | 逐元素激活函数 | ⭐ |
+| 06 | `rope` | cos/sin 频率表、成对旋转 | ⭐⭐⭐ |
+| 07 | `online_softmax` | 单遍 softmax、running max/sum | ⭐⭐⭐ |
+| 08 | `matrix_mul` | tile、`tl.dot`、矩阵乘 | ⭐⭐⭐ |
+| 09 | `fused_add_rmsnorm` | residual add 与 RMSNorm 融合 | ⭐⭐⭐ |
+| 10 | `flash_attention` | 分块 attention、online softmax | ⭐⭐⭐⭐ |
+
+## 面试模式怎么用
+
+每个 `interview.py` 都只保留以下骨架：
+
+1. Triton kernel 函数签名。
+2. Python wrapper 函数签名。
+3. 一个空的 `main()` 流程清单。
+
+你需要自己补：
+
+1. 输入张量构造。
+2. PyTorch reference。
+3. `BLOCK_SIZE` / `BLOCK_M` / `BLOCK_N` 等元参数。
+4. grid 配置。
+5. Triton kernel 逻辑。
+6. wrapper launch 与最终结果校验。
+
+## 推荐训练顺序
+
+1. 先做 `01_vector_add`、`05_silu_gelu`。
+2. 再做 `02_softmax`、`03_layer_norm`、`04_rms_norm`。
+3. 然后做 `06_rope`、`07_online_softmax`、`08_matrix_mul`、`09_fused_add_rmsnorm`。
+4. 最后做 `10_flash_attention`。
+
+## 使用建议
+
+- 面试模式故意不会直接跑通，它的目的是训练你从空骨架写到可验证结果。
+- 如果你卡在公式或签名上，再回头参考 `exercise.py` / `solution.py`。
+- 先把 correctness 写通，再考虑 autotune、向量化和性能参数。
