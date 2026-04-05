@@ -132,7 +132,16 @@ def run_command(command: list[str], cwd: Path, action: str) -> RunResult:
             timeout=180,
             check=False,
         )
-        return build_result(completed.returncode == 0, action, completed.returncode, start, command, completed.stdout, completed.stderr, cwd)
+        return build_result(
+            completed.returncode == 0,
+            action,
+            completed.returncode,
+            start,
+            command,
+            completed.stdout,
+            completed.stderr,
+            cwd,
+        )
     except FileNotFoundError as exc:
         return build_result(False, action, 127, start, command, "", f"命令不存在: {exc}", cwd)
     except subprocess.TimeoutExpired as exc:

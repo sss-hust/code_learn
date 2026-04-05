@@ -12,13 +12,20 @@
       <div class="brand">
         <p class="eyebrow">code_learn</p>
         <h1>Interview Practice Arena</h1>
-        <p class="subcopy">面向手撕练习的题库前端。支持选题、随机面试、草稿保存和一键运行。</p>
+        <p class="subcopy">围绕手撕练习做增强：随机抽题、计时、进度、答案对比、启发式评分。</p>
       </div>
 
-      <section class="panel runtime-panel">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>训练概览</h2>
+          <button id="refreshCatalogBtn" class="ghost">刷新</button>
+        </div>
+        <div id="dashboardGrid" class="dashboard-grid"></div>
+      </section>
+
+      <section class="panel">
         <div class="panel-header">
           <h2>运行环境</h2>
-          <button id="refreshCatalogBtn" class="ghost">刷新</button>
         </div>
         <dl id="runtimeInfo" class="runtime-info"></dl>
       </section>
@@ -69,21 +76,105 @@
             <h2>题目描述</h2>
             <span id="draftBadge" class="pill muted">模板</span>
           </div>
-          <pre id="problemDescription" class="description-block"></pre>
+          <pre id="problemDescription" class="code-block"></pre>
           <h3>专题说明</h3>
-          <pre id="categorySummary" class="description-block compact"></pre>
+          <pre id="categorySummary" class="code-block compact"></pre>
         </div>
 
         <div class="panel editor-panel">
           <div class="panel-header">
             <h2>编辑区</h2>
-            <span class="shortcut-hint">Ctrl/Cmd+S 保存，Ctrl/Cmd+Enter 运行</span>
+            <span class="shortcut-hint">Ctrl/Cmd+S 保存，Ctrl/Cmd+Enter 运行，Ctrl/Cmd+Shift+Enter 评分</span>
           </div>
           <textarea id="editor" spellcheck="false" placeholder="从左侧选择题目后开始练习"></textarea>
           <div class="actions-row sticky">
             <button id="runBtn">运行当前文件</button>
             <button id="testBtn" class="secondary">运行自动测试</button>
+            <button id="evaluateBtn" class="secondary">提交评分</button>
           </div>
+        </div>
+      </section>
+
+      <section class="coach-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>训练面板</h2>
+            <span id="statusBadge" class="pill muted">未开始</span>
+          </div>
+          <div class="timer-layout">
+            <div>
+              <p class="label">本次计时</p>
+              <div id="timerDisplay" class="timer-display">00:00:00</div>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <span>累计时长</span>
+                <strong id="totalTimeLabel">00:00:00</strong>
+              </div>
+              <div class="mini-stat">
+                <span>最近成绩</span>
+                <strong id="lastScoreLabel">--</strong>
+              </div>
+              <div class="mini-stat">
+                <span>最佳成绩</span>
+                <strong id="bestScoreLabel">--</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button id="timerToggleBtn">开始计时</button>
+            <button id="timerStopBtn" class="ghost">暂停并记账</button>
+            <button id="markCompletedBtn" class="secondary">标记完成</button>
+            <button id="markReviewBtn" class="secondary">标记复习</button>
+          </div>
+
+          <label class="field">
+            <span>练习状态</span>
+            <select id="statusSelect">
+              <option value="not_started">未开始</option>
+              <option value="in_progress">进行中</option>
+              <option value="completed">已完成</option>
+              <option value="review">待复习</option>
+            </select>
+          </label>
+
+          <div class="progress-grid">
+            <div class="progress-card">
+              <span>尝试次数</span>
+              <strong id="attemptCountLabel">0</strong>
+            </div>
+            <div class="progress-card">
+              <span>最后执行</span>
+              <strong id="lastRunLabel">--</strong>
+            </div>
+            <div class="progress-card">
+              <span>答案查看</span>
+              <strong id="solutionViewedLabel">0</strong>
+            </div>
+            <div class="progress-card">
+              <span>当前模式</span>
+              <strong id="modeLabel">--</strong>
+            </div>
+          </div>
+
+          <h3>最近记录</h3>
+          <div id="historyList" class="history-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>答案与评分</h2>
+            <span id="reviewBadge" class="pill muted">隐藏</span>
+          </div>
+          <div class="actions-row">
+            <button id="showSolutionBtn" class="secondary">查看参考答案</button>
+            <button id="compareBtn" class="secondary">对比参考答案</button>
+          </div>
+          <div id="evaluationSummary" class="evaluation-summary">
+            评分是启发式的，优先用于提醒 correctness、可运行性和占位符清理情况。
+          </div>
+          <pre id="reviewOutput" class="code-block review-block">等待查看参考答案或评分结果...</pre>
         </div>
       </section>
 
@@ -92,7 +183,7 @@
           <h2>执行输出</h2>
           <span id="runStatus" class="pill muted">空闲</span>
         </div>
-        <pre id="output">等待执行...</pre>
+        <pre id="output" class="code-block">等待执行...</pre>
       </section>
     </main>
   </div>
