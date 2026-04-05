@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <p class="eyebrow">code_learn</p>
+        <h1>Interview Practice Arena</h1>
+        <p class="subcopy">面向手撕练习的题库前端。支持选题、随机面试、草稿保存和一键运行。</p>
+      </div>
+
+      <section class="panel runtime-panel">
+        <div class="panel-header">
+          <h2>运行环境</h2>
+          <button id="refreshCatalogBtn" class="ghost">刷新</button>
+        </div>
+        <dl id="runtimeInfo" class="runtime-info"></dl>
+      </section>
+
+      <section class="panel filters">
+        <label class="field">
+          <span>专题</span>
+          <select id="categorySelect"></select>
+        </label>
+        <label class="field">
+          <span>搜索</span>
+          <input id="searchInput" type="search" placeholder="输入题目名，例如 layer_norm">
+        </label>
+        <div class="actions-row">
+          <button id="randomInterviewBtn">随机面试题</button>
+        </div>
+      </section>
+
+      <section class="panel question-list-panel">
+        <div class="panel-header">
+          <h2>题目列表</h2>
+          <span id="questionCount" class="pill">0</span>
+        </div>
+        <div id="questionList" class="question-list"></div>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <section class="hero">
+        <div>
+          <p class="eyebrow" id="categoryLabel">选择一道题开始</p>
+          <h2 id="problemTitle">尚未选择题目</h2>
+          <div id="problemMeta" class="problem-meta"></div>
+        </div>
+        <div class="hero-actions">
+          <label class="field compact">
+            <span>模式</span>
+            <select id="modeSelect"></select>
+          </label>
+          <button id="saveBtn">保存草稿</button>
+          <button id="resetBtn" class="ghost">恢复模板</button>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel description-panel">
+          <div class="panel-header">
+            <h2>题目描述</h2>
+            <span id="draftBadge" class="pill muted">模板</span>
+          </div>
+          <pre id="problemDescription" class="description-block"></pre>
+          <h3>专题说明</h3>
+          <pre id="categorySummary" class="description-block compact"></pre>
+        </div>
+
+        <div class="panel editor-panel">
+          <div class="panel-header">
+            <h2>编辑区</h2>
+            <span class="shortcut-hint">Ctrl/Cmd+S 保存，Ctrl/Cmd+Enter 运行</span>
+          </div>
+          <textarea id="editor" spellcheck="false" placeholder="从左侧选择题目后开始练习"></textarea>
+          <div class="actions-row sticky">
+            <button id="runBtn">运行当前文件</button>
+            <button id="testBtn" class="secondary">运行自动测试</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="panel-header">
+          <h2>执行输出</h2>
+          <span id="runStatus" class="pill muted">空闲</span>
+        </div>
+        <pre id="output">等待执行...</pre>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
