@@ -1,0 +1,59 @@
+[project]
+name = "code-learn"
+version = "0.1.0"
+description = "PyTorch / Triton / CUDA 入门到推理加速的练习题库 + 浏览器在线练习台"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "yangfu" }]
+license = { text = "MIT" }
+keywords = ["pytorch", "triton", "cuda", "learning", "interview"]
+
+# 主依赖：覆盖 pytorch_basics、model_layers、triton、cuda、practice_arena 全部题目和 webapp。
+# torch / triton 在 Linux + x86_64 上自动带 CUDA 12 runtime（PyPI 默认 wheel）。
+# 其他平台（macOS / Windows）跳过 triton；torch 的 CUDA wheel 也只在 Linux/Windows 上存在。
+dependencies = [
+    "torch>=2.4",
+    "numpy>=1.24",
+    "pytest>=7.4",
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "jinja2>=3.1",
+    "pydantic>=2.0",
+    "triton>=3.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
+[project.optional-dependencies]
+# 仅 Web 练习台依赖，方便只跑 arena 的轻量服务器
+arena = [
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "jinja2>=3.1",
+    "pydantic>=2.0",
+]
+# 开发辅助
+dev = [
+    "ruff>=0.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# 把 practice_arena 作为可 import 的 Python 包打进 wheel，
+# 这样 uv sync 之后 `uv run uvicorn practice_arena.app:app` 直接可用。
+packages = ["practice_arena"]
+
+[tool.hatch.build.targets.wheel.force-include]
+# 模板和静态资源跟代码一起走，不然 FastAPI 找不到 templates/ 和 static/
+"practice_arena/templates" = "practice_arena/templates"
+"practice_arena/static" = "practice_arena/static"
+
+[tool.uv]
+# 默认 PyPI 已经提供 Linux + CUDA 12 的 torch / triton wheel，
+# 不需要额外配置 PyTorch 的索引源。
+# 想强制走 cu128 索引时，可以临时加 `--index https://download.pytorch.org/whl/cu128`。
+
+[tool.pytest.ini_options]
+# 让 `uv run pytest` 在仓库根能识别 conftest.py 注册的 --check-solution
+testpaths = ["pytorch_basics", "triton", "cuda"]
