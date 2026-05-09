@@ -86,8 +86,8 @@ def run_problem(problem: ProblemRecord, mode: str, code: str, action: str) -> Ru
     workspace = prepare_workspace(problem, filename, code)
 
     if action == "test":
-        if mode != "exercise" or not problem.test_file:
-            raise ValueError("当前题目没有可复用的自动测试。")
+        if not problem.test_file or mode not in problem.test_modes:
+            raise ValueError("当前题目在这个模式下没有可复用的自动测试。")
         return run_command([sys.executable, "-m", "pytest", "-q", "-s", problem.test_file], workspace, action)
 
     if action == "run":

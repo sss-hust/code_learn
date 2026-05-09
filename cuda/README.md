@@ -27,6 +27,10 @@ pytest test.py -v
 | # | 题目 | 核心知识点 | 难度 |
 |---|---|---|---|
 | 01 | `vector_add` | 线程索引、基本 kernel、global memory | ⭐ |
+| 01b | `saxpy` | 标量参数、kernel 传值 ABI | ⭐ |
+| 01c | `matrix_add_2d` | 2D `dim3` block/grid、行优先线性化、双轴边界检查 | ⭐⭐ |
+| 01d | `warp_reduce` | warp 内 `__shfl_down_sync` 蝶式 reduce，无 shared memory | ⭐⭐ |
+| 02a | `block_reduce_simple` | 单 block + shared memory 树形归约（无跨 block 累加） | ⭐⭐ |
 | 02 | `reduce_sum` | shared memory 归约、两阶段 reduction | ⭐⭐ |
 | 03 | `softmax` | 行级并行、数值稳定性、shared memory | ⭐⭐ |
 | 04 | `layer_norm` | mean/var 归约、归一化、weight/bias | ⭐⭐ |
@@ -56,10 +60,12 @@ pytest test.py -v
 
 ## 推荐训练顺序
 
-1. 先做 `01_vector_add`、`06_silu_gelu`，把 CUDA 基本链路写顺。
-2. 再做 `02_reduce_sum`、`03_softmax`、`04_layer_norm`、`05_rms_norm`。
-3. 然后做 `07_rope`、`08_gemm`、`09_fused_add_rmsnorm`。
-4. 最后做 `10_flash_attention`。
+1. 先做 `01_vector_add`、`01b_saxpy`、`06_silu_gelu`，把 host/device 内存搬运 + 1D 索引这套链路写顺。
+2. 接着做 `01c_matrix_add_2d`，第一次写 `dim3` 的 2D launch 和双轴边界检查。
+3. 再做 `01d_warp_reduce` 体会 `__shfl_down_sync`，做 `02a_block_reduce_simple` 写一次 shared memory + tree reduce。
+4. 这之后再做 `02_reduce_sum`（跨 block 累加版本）、`03_softmax`、`04_layer_norm`、`05_rms_norm`。
+5. 然后做 `07_rope`、`08_gemm`、`09_fused_add_rmsnorm`。
+6. 最后做 `10_flash_attention`。
 
 ## 使用建议
 

@@ -25,7 +25,11 @@ pytest test.py -v
 | # | 题目 | 核心知识点 | 难度 |
 |---|---|---|---|
 | 01 | `vector_add` | `program_id`、`load/store`、mask | ⭐ |
+| 01b | `axpy` | 标量参数 (`a*x + b`)、复用 1D launch 模式 | ⭐ |
+| 01c | `vector_sum` | 1D reduction、`tl.sum` + `tl.atomic_add` | ⭐⭐ |
+| 01d | `row_max` | 2D 行级 launch、单 reduction、`other=-inf` | ⭐⭐ |
 | 02 | `softmax` | 行级并行、数值稳定性、归约 | ⭐⭐ |
+| 02b | `row_normalize` | 不带数值稳定的"reduction + 广播写回"（softmax 前一步） | ⭐⭐ |
 | 03 | `layer_norm` | 均值/方差、逐行归一化 | ⭐⭐ |
 | 04 | `rms_norm` | RMS 归一化 | ⭐⭐ |
 | 05 | `silu_gelu` | 逐元素激活函数 | ⭐ |
@@ -54,10 +58,12 @@ pytest test.py -v
 
 ## 推荐训练顺序
 
-1. 先做 `01_vector_add`、`05_silu_gelu`。
-2. 再做 `02_softmax`、`03_layer_norm`、`04_rms_norm`。
-3. 然后做 `06_rope`、`07_online_softmax`、`08_matrix_mul`、`09_fused_add_rmsnorm`。
-4. 最后做 `10_flash_attention`。
+1. 先做 `01_vector_add`、`01b_axpy`、`05_silu_gelu`，把"1D elementwise + load/store/mask"练成肌肉记忆。
+2. 接着做 `01c_vector_sum`，第一次面对 reduction + atomic 写回。
+3. 再做 `01d_row_max`、`02b_row_normalize`，把"每行一个 program + reduction + 写回"这套模板吃透。
+4. 然后做 `02_softmax`、`03_layer_norm`、`04_rms_norm`，加上数值稳定与多次 reduction。
+5. 接着 `06_rope`、`07_online_softmax`、`08_matrix_mul`、`09_fused_add_rmsnorm`。
+6. 最后 `10_flash_attention`。
 
 ## 使用建议
 

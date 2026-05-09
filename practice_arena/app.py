@@ -86,7 +86,7 @@ async def load_problem(slug: str, mode: str | None = None) -> dict[str, object]:
         "mode": selected_mode,
         "code": code,
         "draft_exists": is_draft,
-        "can_test": selected_mode == "exercise" and problem.test_file is not None,
+        "can_test": problem.test_file is not None and selected_mode in problem.test_modes,
         "can_run": True,
         "solution_available": problem.solution_file is not None,
         "progress": progress,

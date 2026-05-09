@@ -86,7 +86,7 @@
             <h2>编辑区</h2>
             <span class="shortcut-hint">Ctrl/Cmd+S 保存，Ctrl/Cmd+Enter 运行，Ctrl/Cmd+Shift+Enter 评分</span>
           </div>
-          <textarea id="editor" spellcheck="false" placeholder="从左侧选择题目后开始练习"></textarea>
+          <div id="editor" class="cm-host" data-placeholder="从左侧选择题目后开始练习"></div>
           <div class="actions-row sticky">
             <button id="runBtn">运行当前文件</button>
             <button id="testBtn" class="secondary">运行自动测试</button>
@@ -188,6 +188,6 @@
     </main>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script type="module" src="/static/app.js"></script>
 </body>
 </html>

@@ -1,3 +1,10 @@
+import { EditorView, basicSetup } from "https://esm.sh/codemirror@6.0.1";
+import { Compartment } from "https://esm.sh/@codemirror/state@6.4.1";
+import { keymap } from "https://esm.sh/@codemirror/view@6.26.3";
+import { indentWithTab } from "https://esm.sh/@codemirror/commands@6.5.0";
+import { python } from "https://esm.sh/@codemirror/lang-python@6.1.5";
+import { cpp } from "https://esm.sh/@codemirror/lang-cpp@6.0.2";
+
 const STATUS_LABELS = {
   not_started: "未开始",
   in_progress: "进行中",
@@ -75,6 +82,66 @@ const elements = {
   markCompletedBtn: document.getElementById("markCompletedBtn"),
   markReviewBtn: document.getElementById("markReviewBtn"),
 };
+
+function createCodeMirrorEditor(parent, onChange) {
+  const lang = new Compartment();
+  const view = new EditorView({
+    parent,
+    extensions: [
+      basicSetup,
+      keymap.of([indentWithTab]),
+      lang.of(python()),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          onChange();
+        }
+      }),
+    ],
+  });
+  const placeholder = parent.dataset.placeholder || "";
+  if (placeholder) {
+    view.dispatch({
+      changes: { from: 0, insert: "" },
+    });
+  }
+  return {
+    getValue: () => view.state.doc.toString(),
+    setValue: (text) => {
+      const value = text == null ? "" : String(text);
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: value },
+      });
+    },
+    setLanguage: (name) => {
+      const normalized = (name || "").toLowerCase();
+      const ext = ["cuda", "cpp", "c", "c++"].includes(normalized) ? cpp() : python();
+      view.dispatch({ effects: lang.reconfigure(ext) });
+    },
+    focus: () => view.focus(),
+  };
+}
+
+const cmEditor = createCodeMirrorEditor(elements.editor, () => {
+  state.dirty = true;
+});
+
+elements.editor = new Proxy(elements.editor, {
+  get(target, prop) {
+    if (prop === "value") return cmEditor.getValue();
+    if (prop === "addEventListener") return () => {};
+    if (prop === "focus") return () => cmEditor.focus();
+    const value = target[prop];
+    return typeof value === "function" ? value.bind(target) : value;
+  },
+  set(target, prop, value) {
+    if (prop === "value") {
+      cmEditor.setValue(value);
+      return true;
+    }
+    target[prop] = value;
+    return true;
+  },
+});
 
 let timerIntervalId = null;
 
@@ -272,6 +339,7 @@ function renderProblem(payload) {
   elements.problemDescription.textContent = problem.description;
   elements.categorySummary.textContent = problem.category_summary;
   elements.editor.value = code;
+  cmEditor.setLanguage(problem.language);
   elements.draftBadge.textContent = draftExists ? "草稿" : "模板";
   elements.draftBadge.className = draftExists ? "pill" : "pill muted";
   elements.testBtn.disabled = !canTest;

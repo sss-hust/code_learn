@@ -9,7 +9,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_ROOT = REPO_ROOT / ".practice_arena"
 
-CATEGORY_ORDER = ["model_layers", "triton", "cuda"]
+CATEGORY_ORDER = ["pytorch_basics", "model_layers", "triton", "cuda"]
 MODE_PREFERENCE = ("exercise", "interview")
 TABLE_ROW_RE = re.compile(
     r"^\|\s*(?P<index>\d+)\s*\|\s*`?(?P<name>[^`|]+)`?\s*\|\s*(?P<knowledge>[^|]+?)\s*\|\s*(?P<difficulty>[^|]+?)\s*\|$"
@@ -28,6 +28,7 @@ class ProblemRecord:
     editable_files: dict[str, str]
     solution_file: str | None
     test_file: str | None
+    test_modes: tuple[str, ...]
     knowledge_points: str | None
     difficulty: str | None
     description: str
@@ -45,6 +46,7 @@ class ProblemRecord:
             "editable_files": self.editable_files,
             "solution_file": self.solution_file,
             "test_file": self.test_file,
+            "test_modes": list(self.test_modes),
             "knowledge_points": self.knowledge_points,
             "difficulty": self.difficulty,
             "description": self.description,
@@ -86,6 +88,8 @@ def discover_problems() -> tuple[ProblemRecord, ...]:
             language = detect_language(editable_files[default_mode])
             knowledge, difficulty = lookup_table_meta(problem_dir.name, table_meta)
             description = extract_problem_description(problem_dir, editable_files, knowledge, difficulty)
+            test_file = first_existing(problem_dir, ("test.py",))
+            test_modes = detect_test_modes(problem_dir, editable_files, test_file)
 
             problems.append(
                 ProblemRecord(
@@ -98,7 +102,8 @@ def discover_problems() -> tuple[ProblemRecord, ...]:
                     available_modes=modes,
                     editable_files=editable_files,
                     solution_file=first_existing(problem_dir, ("solution.py", "solution.cu")),
-                    test_file=first_existing(problem_dir, ("test.py",)),
+                    test_file=test_file,
+                    test_modes=test_modes,
                     knowledge_points=knowledge,
                     difficulty=difficulty,
                     description=description,
@@ -115,6 +120,33 @@ def collect_editable_files(problem_dir: Path) -> dict[str, str]:
         if (problem_dir / candidate).exists():
             editable[candidate.split(".", maxsplit=1)[0]] = candidate
     return editable
+
+
+def detect_test_modes(
+    problem_dir: Path,
+    editable_files: dict[str, str],
+    test_file: str | None,
+) -> tuple[str, ...]:
+    """根据 test.py 实际引用了哪个文件，推断它能验证哪些 mode。
+
+    判断顺序：
+    1. Python 测试：`from interview / from exercise / import interview / import exercise`
+    2. CUDA 测试通过 subprocess 编译，靠文件名字符串（比如 ``"exercise.cu"``）识别
+    3. 都没有时，退化为 ``editable_files`` 的所有 mode（保守允许）
+    """
+    if not test_file:
+        return ()
+    text = (problem_dir / test_file).read_text(encoding="utf-8", errors="replace")
+    modes: list[str] = []
+    if "interview" in editable_files:
+        if re.search(r"\b(?:from|import)\s+interview\b", text) or "interview.cu" in text:
+            modes.append("interview")
+    if "exercise" in editable_files:
+        if re.search(r"\b(?:from|import)\s+exercise\b", text) or "exercise.cu" in text:
+            modes.append("exercise")
+    if modes:
+        return tuple(modes)
+    return tuple(editable_files.keys())
 
 
 def detect_language(filename: str) -> str:

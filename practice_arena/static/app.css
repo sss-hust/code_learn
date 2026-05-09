@@ -224,6 +224,57 @@ textarea {
   font-size: 0.95rem;
 }
 
+.cm-host {
+  min-height: 480px;
+  max-height: 70vh;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-strong);
+  overflow: hidden;
+  display: flex;
+}
+
+.cm-host .cm-editor {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  font-family: "JetBrains Mono", "Consolas", "Courier New", monospace;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  background: transparent;
+}
+
+.cm-host .cm-editor.cm-focused {
+  outline: none;
+}
+
+.cm-host .cm-scroller {
+  font-family: inherit;
+  padding: 0.4rem 0;
+}
+
+.cm-host .cm-content {
+  padding: 0.4rem 0;
+  caret-color: var(--accent);
+}
+
+.cm-host .cm-gutters {
+  background: rgba(216, 203, 185, 0.25);
+  border-right: 1px solid rgba(216, 203, 185, 0.6);
+  color: var(--muted);
+}
+
+.cm-host .cm-activeLineGutter,
+.cm-host .cm-activeLine {
+  background: var(--accent-soft);
+}
+
+.cm-host .cm-selectionMatch,
+.cm-host .cm-selectionBackground,
+.cm-host ::selection {
+  background: rgba(178, 82, 45, 0.18) !important;
+}
+
 .question-list {
   display: grid;
   gap: 0.6rem;
@@ -467,5 +518,9 @@ textarea {
 
   textarea {
     min-height: 320px;
+  }
+
+  .cm-host {
+    min-height: 360px;
   }
 }
