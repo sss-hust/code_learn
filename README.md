@@ -12,7 +12,7 @@
 | [`model_layers/`](model_layers/) | `nn.Module` 风格的模型层（Embedding / RMSNorm / MHA / GQA / MoE / TransformerBlock） | 11 |
 | [`triton/`](triton/) | Triton kernel（向量加法 / 行 reduction / softmax / RoPE / matmul / Flash Attention） | 14 |
 | [`cuda/`](cuda/) | CUDA kernel（vector_add / 2D 索引 / warp shuffle / shared memory / GEMM / Flash Attention） | 14 |
-| [`practice_arena/`](practice_arena/) | 浏览器在线练习台（CodeMirror 编辑器 + 自动测试 + 计时 + 评分） | webapp |
+| [`practice_arena/`](practice_arena/) | 浏览器在线练习台（CodeMirror 编辑器 + 自动测试 + 计时 + 评分，前端资源 vendored 到 `practice_arena/static/vendor/`，零公网依赖） | webapp |
 
 每个题目有三种文件：
 

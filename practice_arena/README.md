@@ -5,7 +5,7 @@
 ## 功能
 
 - 题目自动发现：扫描 `pytorch_basics`、`model_layers`、`triton`、`cuda` 下的练习目录。
-- 真编辑器：CodeMirror 6（行号、Python / CUDA 语法高亮、括号匹配、Tab 缩进、Ctrl+Z 历史）。
+- 真编辑器：CodeMirror 6（行号、Python / CUDA 语法高亮、括号匹配、Tab 缩进、Ctrl+Z 历史），已 vendored 到 `static/vendor/`，**浏览器不需要联网**，加载失败时自动退回 textarea。
 - 两种模式：优先支持 `exercise.*` 的自动测试，也支持 `interview.*` 的随机面试练习。
 - 草稿隔离：网页里编辑的代码默认保存到 `.practice_arena/drafts/`，不覆盖原题库模板。
 - 训练记录：保存做题状态、累计时长、最近执行历史、最佳分数。
@@ -43,12 +43,28 @@ ssh -N -L 8765:localhost:8765 187
 - 服务只绑 127.0.0.1，不会被局域网其他人扫到
 - 无需配置 nginx / 反向代理 / SSL
 - 关掉 SSH 隧道连接就关了，对外完全不可见
-
-> 注：CodeMirror 6 通过 `https://esm.sh` CDN 按需拉模块，所以**浏览器需要能访问公网**（或本地代理）。第一次访问会有几秒拉资源的等待，之后会被浏览器缓存。
+- **CodeMirror 编辑器走的是本地 `static/vendor/`**，浏览器和服务器之间不需要任何额外的公网请求
 
 ### 想直接局域网访问（不推荐放公网）
 
 把 `--host 127.0.0.1` 改成 `--host 0.0.0.0`，然后访问 `http://<远程机内网IP>:8765`。注意先用防火墙限制访问来源。
+
+## 重新拉取 CodeMirror 资源
+
+CodeMirror 6 的依赖图已经通过 [`vendor.py`](vendor.py) 提前拉到 `static/vendor/` 并随仓库一起提交，正常情况下不用碰。
+
+只有以下场景才需要重新跑 vendor：
+
+- 想升级 CodeMirror 到新版本 → 改 `vendor.py` 里 `ENTRY_POINTS` 的版本号
+- 删了 `static/vendor/` 想重建
+- 浏览器报某个模块 404，说明 BFS 漏抓了
+
+```bash
+# 服务器需要能访问 https://esm.sh，本地浏览器不需要
+uv run python -m practice_arena.vendor
+```
+
+脚本是幂等的，每次跑都会清空 `static/vendor/` 后重抓一次。
 
 ## 版本管理建议
 

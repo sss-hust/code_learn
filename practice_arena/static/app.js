@@ -1,9 +1,38 @@
-import { EditorView, basicSetup } from "https://esm.sh/codemirror@6.0.1";
-import { Compartment } from "https://esm.sh/@codemirror/state@6.4.1";
-import { keymap } from "https://esm.sh/@codemirror/view@6.26.3";
-import { indentWithTab } from "https://esm.sh/@codemirror/commands@6.5.0";
-import { python } from "https://esm.sh/@codemirror/lang-python@6.1.5";
-import { cpp } from "https://esm.sh/@codemirror/lang-cpp@6.0.2";
+// CodeMirror 6 已 vendored 到 /static/vendor/，整个 graph 收敛到 codemirror@6.0.1
+// 自己解析出的依赖版本（state@6.6.0、view@6.42.1 等），避免单例错配。
+// 通过 dynamic import + try/catch 加载，CDN / 资源缺失时会退到 textarea，按钮始终可用。
+const CM_IMPORTS = {
+  codemirror: "/static/vendor/codemirror@6.0.1.js",
+  state: "/static/vendor/@codemirror/state@^6.0.0.js",
+  view: "/static/vendor/@codemirror/view@^6.0.0.js",
+  commands: "/static/vendor/@codemirror/commands@^6.0.0.js",
+  langPython: "/static/vendor/@codemirror/lang-python@6.1.5.js",
+  langCpp: "/static/vendor/@codemirror/lang-cpp@6.0.2.js",
+};
+
+let CM = null;
+try {
+  const [codemirrorMod, stateMod, viewMod, commandsMod, pythonMod, cppMod] = await Promise.all([
+    import(CM_IMPORTS.codemirror),
+    import(CM_IMPORTS.state),
+    import(CM_IMPORTS.view),
+    import(CM_IMPORTS.commands),
+    import(CM_IMPORTS.langPython),
+    import(CM_IMPORTS.langCpp),
+  ]);
+  CM = {
+    EditorView: codemirrorMod.EditorView,
+    basicSetup: codemirrorMod.basicSetup,
+    Compartment: stateMod.Compartment,
+    keymap: viewMod.keymap,
+    indentWithTab: commandsMod.indentWithTab,
+    python: pythonMod.python,
+    cpp: cppMod.cpp,
+  };
+} catch (error) {
+  console.warn("[arena] CodeMirror 加载失败，退化到 textarea 模式：", error);
+  CM = null;
+}
 
 const STATUS_LABELS = {
   not_started: "未开始",
@@ -84,26 +113,20 @@ const elements = {
 };
 
 function createCodeMirrorEditor(parent, onChange) {
-  const lang = new Compartment();
-  const view = new EditorView({
+  const lang = new CM.Compartment();
+  const view = new CM.EditorView({
     parent,
     extensions: [
-      basicSetup,
-      keymap.of([indentWithTab]),
-      lang.of(python()),
-      EditorView.updateListener.of((update) => {
+      CM.basicSetup,
+      CM.keymap.of([CM.indentWithTab]),
+      lang.of(CM.python()),
+      CM.EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           onChange();
         }
       }),
     ],
   });
-  const placeholder = parent.dataset.placeholder || "";
-  if (placeholder) {
-    view.dispatch({
-      changes: { from: 0, insert: "" },
-    });
-  }
   return {
     getValue: () => view.state.doc.toString(),
     setValue: (text) => {
@@ -114,16 +137,47 @@ function createCodeMirrorEditor(parent, onChange) {
     },
     setLanguage: (name) => {
       const normalized = (name || "").toLowerCase();
-      const ext = ["cuda", "cpp", "c", "c++"].includes(normalized) ? cpp() : python();
+      const ext = ["cuda", "cpp", "c", "c++"].includes(normalized) ? CM.cpp() : CM.python();
       view.dispatch({ effects: lang.reconfigure(ext) });
     },
     focus: () => view.focus(),
   };
 }
 
-const cmEditor = createCodeMirrorEditor(elements.editor, () => {
-  state.dirty = true;
-});
+function createTextareaFallback(parent, onChange) {
+  // 兜底：当 CodeMirror 资源没装好或加载失败时，把宿主 div 当 textarea 用，
+  // 至少保证整个 webapp 还能跑（写代码、保存草稿、运行测试）。
+  parent.classList.add("cm-fallback");
+  const textarea = document.createElement("textarea");
+  textarea.spellcheck = false;
+  textarea.placeholder = parent.dataset.placeholder || "";
+  textarea.className = "cm-fallback-textarea";
+  parent.innerHTML = "";
+  parent.appendChild(textarea);
+  textarea.addEventListener("input", onChange);
+  return {
+    getValue: () => textarea.value,
+    setValue: (text) => {
+      textarea.value = text == null ? "" : String(text);
+    },
+    setLanguage: () => {
+      /* textarea 不支持语法高亮 */
+    },
+    focus: () => textarea.focus(),
+  };
+}
+
+const cmEditor = CM
+  ? createCodeMirrorEditor(elements.editor, () => {
+      state.dirty = true;
+    })
+  : createTextareaFallback(elements.editor, () => {
+      state.dirty = true;
+    });
+
+if (!CM) {
+  console.info("[arena] 当前以 textarea 兜底模式运行。要恢复 CodeMirror，运行 `uv run python -m practice_arena.vendor` 后刷新页面。");
+}
 
 elements.editor = new Proxy(elements.editor, {
   get(target, prop) {
